@@ -60,8 +60,7 @@ server.get('/api/users/:id', (req, res) => {
             res.status(404).json({ message: "The user with the specified ID does not exist."});
         } 
     } catch (err) {
-		res
-			.status(500).json({ errorMessage: "The user information could not be retrieved." });
+		res.status(500).json({ errorMessage: "The user information could not be retrieved." });
 	}
     
 });
@@ -82,6 +81,30 @@ server.delete('/api/users/:id', (req, res) => {
         }
 	} else {
 		res.status(404).json({ message: "The user with the specified ID does not exist." });
+	}
+});
+
+server.put("/api/users/:id", (req, res) => {
+	const body = req.body;
+	const id = req.params.id;
+
+	if (!body.name || !body.bio) {
+		res.status(400).json({ errorMessage: "Please provide name and bio for the user." });
+	} else {
+		const user = users.find((user) => user.id == id);
+		if (user) {
+			users = users.map((user) => {
+				return user.id == id ? { ...body, id } : user;
+			});
+			const newUser = users.find((user) => user.id == id);
+			if (newUser) {
+                res.json(users);
+            } else {
+                res.status(500).json({ errorMessage: "The information could not be modified." });
+            }	 
+		} else {
+			res.status(404).json({ message: "The user with the specified ID does not exist." });
+		}
 	}
 });
 
