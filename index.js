@@ -26,23 +26,44 @@ server.get('/', (req, res) => {
 });
 
 server.get('/api/users', (req, res) => {
-    res.json(users);
+    if (users) {
+        res.json(users);
+    } else {
+        res.status(500).json({ errorMessage: "The users information could not be retrieved." });
+    }
 });
 
 server.post('/api/users', (req, res) => {
-    const userInfo = req.body;
-    users.push(userInfo);
-    res.status(201).json(users);
+    const body = req.body;
+
+    if (!body.name || !body.bio) {
+		res
+			.status(400).json({ errorMessage: "Please provide name and bio for the user." });
+	} else {
+        users.push(body);
+        const newUser = users.find((user) => user.id == body.id);
+		if (newUser) {
+            res.status(201).json(users);
+        } else {
+            res.status(500).json({errorMessage: "There was an error while saving the user to the database"});
+        }
+    }
 });
 
 server.get('/api/users/:id', (req, res) => {
-    const userId = req.params.id;
-    const user = users.find((user) => user.id == userId);
-    if (user) {
-        res.status(200).json(user);
-    } else {
-        res.status(404).json({ message: "User not found"});
-    }
+    try {
+        const userId = req.params.id;
+        const user = users.find((user) => user.id == userId);
+        if (user) {
+            res.status(200).json(user);
+        } else {
+            res.status(404).json({ message: "The user with the specified ID does not exist."});
+        } 
+    } catch (err) {
+		res
+			.status(500).json({ errorMessage: "The user information could not be retrieved." });
+	}
+    
 });
 
 server.delete('/api/users/:id', (req, res) => {
@@ -50,9 +71,18 @@ server.delete('/api/users/:id', (req, res) => {
     let user = users.filter(user => {
         return user.id == reqId;
     })[0];
-    const index = users.indexOf(user);
-    users.splice(index, 1);
-    res.json(users);
+    if (user) {
+        const index = users.indexOf(user);
+        users.splice(index, 1);
+        const deletedUser = users.find((user) => user.id === req.params.id);
+        if (deletedUser) {
+            res.status(500).json({ errorMessage: "The user could not be removed." });
+        } else {
+            res.json(users);
+        }
+	} else {
+		res.status(404).json({ message: "The user with the specified ID does not exist." });
+	}
 });
 
 const port = 5000;
